@@ -1,0 +1,48 @@
+# Deploy static content to GitHub Pages
+name: Deploy static site to GitHub Pages
+
+on:
+  push:
+    # Deploy only when changes are pushed to the default branch
+    branches: ["main"]
+  # Allow manual runs from the Actions tab
+  workflow_dispatch:
+
+# Minimal permissions required for Pages deployment
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Ensure deployments are serialized; do not cancel in-progress deploys
+concurrency:
+  group: pages-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy to GitHub Pages
+    # Pages environment is used for the deployment URL and environment protection rules
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # fetch full repository by default; reduce if needed
+          fetch-depth: 0
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        # This action packages the files that will be deployed to Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # Adjust `path` if your built site lives in a subdirectory (e.g. `build/` or `docs/`)
+          path: "."
+
+      - name: Deploy to GitHub
